@@ -34,7 +34,7 @@ from pynput.keyboard import Controller
 # ─────────────────────────────────────────────
 
 # Taste die gehalten werden muss zum Aufnehmen.
-HOTKEY = keyboard.Key.ctrl_l          # Linke Ctrl-Taste
+HOTKEY = keyboard.Key.alt_r           # Rechte Option-Taste
 
 # Sprache: None = automatisch erkennen, "de" = Deutsch, "en" = Englisch
 LANGUAGE = None
