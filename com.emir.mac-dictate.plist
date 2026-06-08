@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.emir.mac-dictate</string>
+
+    <!-- Launch via `open` (LaunchServices), NOT by exec'ing the bundle script
+         directly. Only a LaunchServices launch gives the process the stable
+         "com.emir.mac-dictate" bundle identity that TCC honors. Running the
+         script straight from launchd ends up evaluated as the raw, adhoc-signed
+         python3.12 binary, whose TCC identity is broken -> "not trusted".
+         `open -W` blocks until the app quits, so KeepAlive can restart it. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/open</string>
+        <string>-W</string>
+        <string>-a</string>
+        <string>/Users/emir/repo_workspaces/mac-dictate/mac-dictate.app</string>
+    </array>
+
+    <!-- Start automatically at login -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Restart if it crashes -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Wait 5s before restarting after a crash -->
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <!-- Logs -->
+    <key>StandardOutPath</key>
+    <string>/Users/emir/Library/Logs/mac-dictate.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/emir/Library/Logs/mac-dictate.log</string>
+
+    <!-- Run in the app directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/emir/repo_workspaces/mac-dictate</string>
+</dict>
+</plist>
