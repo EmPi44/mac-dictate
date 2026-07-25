@@ -140,9 +140,10 @@ testen**, sonst misst man Mist.)
    → startet **`ffmpeg`**. Unter launchd ist der `PATH` minimal (`/usr/bin:/bin:/usr/sbin:/sbin`),
    und `ffmpeg` liegt in `/opt/homebrew/bin` → nicht gefunden → `FileNotFoundError`.
    **Lösung (umgesetzt):** Das Audio liegt eh schon als `float32`-Array in 16 kHz vor - direkt an
-   `_model.transcribe(audio_array, fp16=False)` übergeben statt über eine WAV-Datei. Damit entfällt
-   `ffmpeg` komplett (kein PATH-Problem, keine Temp-Datei, schneller). Siehe `transcribe_and_type()`
-   in `dictate_app.py`. **NICHT** wieder auf die Datei-/Pfad-Variante zurückbauen.
+   `mlx_whisper.transcribe(audio_array, path_or_hf_repo=MODEL, fp16=True)` übergeben statt über
+   eine WAV-Datei. Damit entfällt `ffmpeg` komplett (kein PATH-Problem, keine Temp-Datei, schneller).
+   Siehe `transcribe_and_type()` in `dictate_app.py`. **NICHT** wieder auf die
+   Datei-/Pfad-Variante zurückbauen.
    (Alternative wäre `EnvironmentVariables` mit `PATH` in der plist, aber die Array-Variante ist sauberer.)
 
 1. **Adhoc-Python hat unter launchd KEINEN eigenen Trust** (Hauptursache, diagnostiziert 2026-06-06).
@@ -172,7 +173,7 @@ testen**, sonst misst man Mist.)
 
 5. **Richtiges Python verwenden - NICHT das `venv`:**
    `/opt/homebrew/Caskroom/miniconda/base/bin/python3` (conda, 3.12) hat alle Dependencies
-   (`rumps`, `whisper`, `torch`, `sounddevice`, `scipy`, `numpy`, `pynput`, `pyobjc`).
+   (`rumps`, `mlx-whisper`, `sounddevice`, `numpy`, `pynput`, `pyobjc`).
    Das `venv/` im Repo (3.14) ist unvollständig (kein `rumps`) - verwaist, nicht benutzen.
 
 6. **Import von `AXIsProcessTrustedWithOptions`** liegt in `ApplicationServices` (oder `HIServices`),
@@ -186,4 +187,4 @@ testen**, sonst misst man Mist.)
 Im `CONFIG`-Block oben in `dictate_app.py`:
 - `HOTKEY` = `keyboard.Key.alt_r` (rechte Option-Taste; auf `ctrl_r`/`cmd_r`/etc. änderbar)
 - `LANGUAGE` = `None` (Auto de+en); auf `"de"` oder `"en"` setzen für mehr Tempo/Genauigkeit
-- `MODEL` = `"small"` (Whisper-Modell)
+- `MODEL` = `"mlx-community/whisper-small-mlx"` (multilinguales Whisper-small-Modell für MLX)

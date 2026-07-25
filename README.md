@@ -15,32 +15,32 @@ Works globally: terminal, browser, editor, chat - anywhere.
 
 ```bash
 brew install portaudio
-pip install pynput sounddevice mlx-whisper numpy scipy
+pip install rumps pynput sounddevice mlx-whisper numpy pyobjc-framework-ApplicationServices
 ```
 
 ## Run
 
 ```bash
-python3 dictate.py
+python3 dictate_app.py
 ```
 
 On first run, macOS will ask for permissions:
-- System Settings → Privacy → Accessibility → allow Terminal
-- System Settings → Privacy → Microphone → allow Terminal
+- System Settings → Privacy → Accessibility → allow `mac-dictate`
+- System Settings → Privacy → Microphone → allow `mac-dictate`
 
 ## Usage
 
-Hold **Right Ctrl** → speak → release → text is typed at your cursor.
+Hold **Right Option** → speak → release → text is typed at your cursor.
 
 ## Configuration
 
-Edit the `CONFIG` block at the top of `dictate.py`:
+Edit the `CONFIG` block at the top of `dictate_app.py`:
 
 | Setting | Default | Options |
 |---|---|---|
-| `HOTKEY` | `keyboard.Key.ctrl_r` | `alt_r`, `cmd_r`, or any key |
+| `HOTKEY` | `keyboard.Key.alt_r` | `ctrl_r`, `cmd_r`, or any key |
 | `LANGUAGE` | `None` (auto-detect) | `"de"`, `"en"`, etc. |
-| `MODEL` | `whisper-large-v3-turbo` | any mlx-whisper model |
+| `MODEL` | `mlx-community/whisper-small-mlx` | any compatible MLX Whisper model |
 | `ADD_TRAILING_SPACE` | `True` | `False` |
 | `MIN_DURATION_SECONDS` | `0.5` | float |
 
@@ -48,6 +48,7 @@ Edit the `CONFIG` block at the top of `dictate.py`:
 
 - `sounddevice` keeps a live audio stream open (near-zero CPU when not recording)
 - `pynput` listens globally for the hotkey
-- On release: audio is written to a temp WAV and passed to `mlx-whisper`
-- `mlx-whisper` runs on the Neural Engine - typically 1-2s transcription
+- On release: the 16 kHz `float32` audio array is queued directly for `mlx-whisper`
+- `mlx-whisper` runs on the Apple Silicon GPU through MLX
+- Dictations are transcribed serially in capture order
 - `pynput.keyboard.Controller` types the result at the current cursor position

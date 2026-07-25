@@ -8,10 +8,10 @@ Rechte Option-Taste halten → sprechen → loslassen → Text erscheint.
 
 import threading
 import os
+import queue
 import numpy as np
 import sounddevice as sd
-import torch
-import whisper
+import mlx_whisper
 import rumps
 from pynput import keyboard
 from pynput.keyboard import Controller
@@ -23,7 +23,7 @@ from CoreFoundation import kCFBooleanTrue
 # ─────────────────────────────────────────────
 HOTKEY          = keyboard.Key.alt_r
 LANGUAGE        = None           # None = auto (Deutsch + Englisch)
-MODEL           = "small"
+MODEL           = "mlx-community/whisper-small-mlx"
 ADD_TRAILING_SPACE = True
 MIN_DURATION_SECONDS = 0.5
 SAMPLE_RATE     = 16000
@@ -37,14 +37,22 @@ recording = False
 audio_chunks = []
 _lock = threading.Lock()
 _typer = Controller()
-_model = None
 _listener = None
+_transcription_queue = queue.Queue()
 
 
 def load_model():
-    global _model
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
-    _model = whisper.load_model(MODEL, device=device)
+    """Load and warm the MLX model before the listener accepts recordings."""
+    mlx_whisper.transcribe(
+        np.zeros(SAMPLE_RATE, dtype=np.float32),
+        path_or_hf_repo=MODEL,
+        language="de",
+        temperature=0.0,
+        no_speech_threshold=0.4,
+        condition_on_previous_text=False,
+        fp16=True,
+        verbose=None,
+    )
 
 
 def audio_callback(indata, frames, time_info, status):
@@ -63,10 +71,7 @@ def _log_error(msg):
         pass
 
 
-def transcribe_and_type(app):
-    with _lock:
-        chunks = list(audio_chunks)
-
+def transcribe_and_type(app, chunks):
     if not chunks:
         app.title = ICON_IDLE
         return
@@ -81,17 +86,18 @@ def transcribe_and_type(app):
     app.title = ICON_THINKING
 
     try:
-        # Pass the float32 16kHz audio array straight to whisper. This avoids
-        # whisper.load_audio()'s ffmpeg call, which fails under launchd because
-        # ffmpeg (in /opt/homebrew/bin) is not on launchd's minimal PATH.
+        # Pass the float32 16kHz audio array straight to MLX Whisper. This avoids
+        # the file-loading path and its ffmpeg dependency under launchd.
         # See CLAUDE.md "Gotcha: ffmpeg / launchd PATH".
-        result = _model.transcribe(
+        result = mlx_whisper.transcribe(
             audio.astype(np.float32),
+            path_or_hf_repo=MODEL,
             language=LANGUAGE,
             temperature=0.0,
             no_speech_threshold=0.4,
             condition_on_previous_text=False,
             fp16=True,
+            verbose=None,
         )
         text = result.get("text", "").strip()
         if text:
@@ -102,6 +108,16 @@ def transcribe_and_type(app):
         _log_error("transcription failed: %r" % e)
     finally:
         app.title = ICON_IDLE
+
+
+def transcription_worker(app):
+    """Process dictations in capture order so results cannot overtake each other."""
+    while True:
+        chunks = _transcription_queue.get()
+        try:
+            transcribe_and_type(app, chunks)
+        finally:
+            _transcription_queue.task_done()
 
 
 class DictateApp(rumps.App):
@@ -123,6 +139,9 @@ class DictateApp(rumps.App):
     def _load(self):
         load_model()
         self.title = ICON_IDLE
+        threading.Thread(
+            target=transcription_worker, args=(self,), daemon=True
+        ).start()
         self._start_listener()
 
     def toggle(self, sender):
@@ -160,7 +179,7 @@ class DictateApp(rumps.App):
                 app.title = ICON_RECORDING
 
         def on_release(key):
-            global recording
+            global recording, audio_chunks
             if not app.active:
                 return
             if key == HOTKEY:
@@ -168,9 +187,10 @@ class DictateApp(rumps.App):
                     if not recording:
                         return
                     recording = False
-                threading.Thread(
-                    target=transcribe_and_type, args=(app,), daemon=True
-                ).start()
+                    chunks = audio_chunks
+                    audio_chunks = []
+                app.title = ICON_THINKING
+                _transcription_queue.put(chunks)
 
         self._listener = keyboard.Listener(on_press=on_press, on_release=on_release)
         self._listener.start()
