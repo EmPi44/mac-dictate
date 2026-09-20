@@ -497,6 +497,18 @@ class DictateAppTests(unittest.TestCase):
         self.assertEqual(str(panel.text_view.string()), "Fertiger Text")
         panel.close()
 
+    def test_empty_description_is_a_placeholder_only_while_pending(self):
+        NSApplication.sharedApplication()
+        panel = ReviewPanel(lambda *args: True, lambda *args: None)
+        panel.show("", None, {}, text_pending=True, recording=True)
+        self.assertIn("Keep speaking", str(panel.text_view.string()))
+
+        panel.set_recording(False)
+        self.assertEqual(str(panel.text_view.string()), "Finalizing dictation ...")
+        panel.set_transcript("")
+        self.assertEqual(str(panel.text_view.string()), "")
+        panel.close()
+
     def test_review_shows_transcription_error_if_it_finished_before_opening(self):
         NSApplication.sharedApplication()
         panel = ReviewPanel(lambda *args: True, lambda *args: None)
