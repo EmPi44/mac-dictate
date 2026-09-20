@@ -164,7 +164,7 @@ def transcribe_and_type(app, chunks, capture=None):
     except Exception as e:
         _log_error("transcription failed: %r" % e)
         if capture is not None and capture.requested:
-            capture.text_error = "Transkription fehlgeschlagen. Du kannst den Prompt selbst eingeben."
+            capture.text_error = "Transcription failed. You can enter the prompt manually."
             app._queue_review("", capture)
     finally:
         app.title = ICON_IDLE
@@ -199,9 +199,9 @@ class DictateApp(rumps.App):
     def __init__(self):
         super().__init__(ICON_IDLE, quit_button=None)
         self.menu = [
-            rumps.MenuItem("Diktat: EIN", callback=self.toggle),
+            rumps.MenuItem("Dictation: ON", callback=self.toggle),
             None,
-            rumps.MenuItem("Beenden", callback=self.quit_app),
+            rumps.MenuItem("Quit", callback=self.quit_app),
         ]
         self.active = True
         self._stream = None
@@ -243,10 +243,10 @@ class DictateApp(rumps.App):
     def toggle(self, sender):
         self.active = not self.active
         if self.active:
-            sender.title = "Diktat: AUS"
+            sender.title = "Dictation: ON"
             self._start_listener()
         else:
-            sender.title = "Diktat: EIN"
+            sender.title = "Dictation: OFF"
             self._stop_listener()
 
     def _set_caption(self, session, message):
@@ -330,7 +330,7 @@ class DictateApp(rumps.App):
             session.mode = mode
             session.error = None
             session.finished.clear()
-        session.context = {"scope": "Ganzer Bildschirm" if mode == "screen" else "Ausschnitt"}
+        session.context = {"scope": "Full screen" if mode == "screen" else "Region"}
         if mode == "region":
             self._region_selection_session = session
         try:
@@ -347,7 +347,7 @@ class DictateApp(rumps.App):
             try:
                 display_id = display_under_pointer()
             except Exception as exc:
-                session.error = "Kein Bildschirm für die Aufnahme gefunden."
+                session.error = "No display available for capture."
                 _log_error("display selection failed: %r" % exc)
                 session.finished.set()
                 return
@@ -366,7 +366,7 @@ class DictateApp(rumps.App):
                             session.mode = None
                             session.discarded = True
                     if not cancelled_while_recording:
-                        session.error = "Ausschnitt abgebrochen."
+                        session.error = "Region capture cancelled."
                 elif session.discarded:
                     discard(path)
                 else:
@@ -450,15 +450,15 @@ class DictateApp(rumps.App):
             return False
         if session is not None and not session.text_ready.is_set():
             session.copy_when_ready = True
-            self._review_panel.set_status("Diktat wird verarbeitet ...")
+            self._review_panel.set_status("Processing dictation ...")
             return False
         prompt = format_prompt(text, image_path, context)
         pasteboard = NSPasteboard.generalPasteboard()
         pasteboard.clearContents()
         if not pasteboard.setString_forType_(prompt, NSPasteboardTypeString):
-            self._review_panel.set_status("Prompt konnte nicht kopiert werden.")
+            self._review_panel.set_status("Could not copy the prompt.")
             return False
-        self._review_panel.set_status("Prompt kopiert. In neuem oder bestehendem Task mit ⌘V einfügen.")
+        self._review_panel.set_status("Prompt copied. Paste into a new or existing task with ⌘V.")
         return True
 
     def _discard_review(self, image_path, copied=False):
@@ -491,7 +491,7 @@ class DictateApp(rumps.App):
             self._capture_hotkey_pending = False
         if preview is not None:
             preview.cancel()
-            self._set_caption(preview, "Prüfe Diktat ..." if capture.requested else "Setze Text ein ...")
+            self._set_caption(preview, "Checking dictation ..." if capture.requested else "Inserting text ...")
         self.title = ICON_THINKING
         if capture is not None and capture.requested and not capture.review_queued:
             self._queue_review("", capture, pending=True)
@@ -546,7 +546,7 @@ class DictateApp(rumps.App):
                         app._preview_worker = worker
                         with app._caption_lock:
                             app._caption_session = worker
-                            app._caption_message = "Höre zu ...  ·  Taste erneut drücken zum Beenden"
+                            app._caption_message = "Listening ...  ·  Press again to finish"
                 app.title = ICON_RECORDING
 
         def on_release(key):
@@ -565,8 +565,8 @@ class DictateApp(rumps.App):
         _log_error("preview failed: %r" % exc)
         with _lock:
             screenshot_selected = self._capture_session is not None and self._capture_session.requested
-        instruction = "Fertig & kopieren für den Endtext." if screenshot_selected else "Taste erneut drücken für den Endtext."
-        self._set_caption(session, "Live-Vorschau nicht verfügbar. " + instruction)
+        instruction = "Use Finish & Copy for the final text." if screenshot_selected else "Press again for the final text."
+        self._set_caption(session, "Live preview unavailable. " + instruction)
 
     def _stop_listener(self):
         global recording, audio_chunks

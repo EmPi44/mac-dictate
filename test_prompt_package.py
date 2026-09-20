@@ -11,14 +11,14 @@ class PromptPackageTests(unittest.TestCase):
         result = format_prompt(
             "Finde den Fehler",
             "/tmp/dictation-example.png",
-            {"scope": "Ausschnitt", "app": "Safari", "title": "Dashboard", "url": "https://example.com/page"},
+            {"scope": "Region", "app": "Safari", "title": "Dashboard", "url": "https://example.com/page"},
         )
         self.assertIn("Finde den Fehler", result)
-        self.assertIn("Aufnahme: Ausschnitt", result)
+        self.assertIn("Capture: Region", result)
         self.assertIn("App: Safari", result)
-        self.assertIn("Fenster: Dashboard", result)
+        self.assertIn("Window: Dashboard", result)
         self.assertIn("URL: https://example.com/page", result)
-        self.assertIn("Bilddatei: /tmp/dictation-example.png", result)
+        self.assertIn("Image file: /tmp/dictation-example.png", result)
 
 
 if __name__ == "__main__":

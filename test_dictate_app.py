@@ -66,6 +66,20 @@ class DictateAppTests(unittest.TestCase):
         self.assertEqual(self.typer.typed, [])
         self.assertEqual(self.app.title, dictate_app.ICON_IDLE)
 
+    def test_menu_label_tracks_dictation_state(self):
+        app = mock.Mock(active=True)
+        item = mock.Mock()
+
+        dictate_app.DictateApp.toggle(app, item)
+        self.assertFalse(app.active)
+        self.assertEqual(item.title, "Dictation: OFF")
+        app._stop_listener.assert_called_once()
+
+        dictate_app.DictateApp.toggle(app, item)
+        self.assertTrue(app.active)
+        self.assertEqual(item.title, "Dictation: ON")
+        app._start_listener.assert_called_once()
+
     @mock.patch("dictate_app.mlx_whisper.transcribe")
     def test_short_audio_is_ignored(self, transcribe):
         dictate_app.transcribe_and_type(self.app, self.chunks(seconds=0.1))
@@ -456,7 +470,7 @@ class DictateAppTests(unittest.TestCase):
         NSApplication.sharedApplication()
         panel = ReviewPanel(lambda *args: True, lambda *args: None)
         panel.show("", None, {}, text_pending=True, recording=True)
-        self.assertEqual(panel.copy_button.title(), "Fertig & kopieren")
+        self.assertEqual(panel.copy_button.title(), "Finish & Copy")
         self.assertTrue(panel.copy_button.isEnabled())
         self.assertFalse(panel.text_view.isEditable())
 
@@ -475,7 +489,7 @@ class DictateAppTests(unittest.TestCase):
         panel.show("", None, {}, pending=False, text_pending=True)
         self.assertFalse(panel.copy_button.isEnabled())
         self.assertFalse(panel.text_view.isEditable())
-        self.assertEqual(panel.status.stringValue(), "Diktat wird verarbeitet ...")
+        self.assertEqual(panel.status.stringValue(), "Processing dictation ...")
 
         panel.set_transcript("Fertiger Text")
         self.assertTrue(panel.copy_button.isEnabled())
@@ -509,7 +523,7 @@ class DictateAppTests(unittest.TestCase):
             display.assert_called_once()
             capture.assert_called_once_with(2)
             self.assertEqual(session.image_path, "/tmp/screen-fixture.png")
-            self.assertEqual(session.context["scope"], "Ganzer Bildschirm")
+            self.assertEqual(session.context["scope"], "Full screen")
             self.assertTrue(session.finished.is_set())
             app._queue_review.assert_called_once_with("", session, pending=True)
         finally:

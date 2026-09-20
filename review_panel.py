@@ -70,7 +70,7 @@ class ReviewPanel:
             NSBackingStoreBuffered,
             False,
         )
-        self.panel.setTitle_("Diktat prüfen")
+        self.panel.setTitle_("Review Dictation")
         self.panel.setReleasedWhenClosed_(False)
         self.panel.setDelegate_(self._actions)
         self.panel.setHidesOnDeactivate_(False)
@@ -87,9 +87,9 @@ class ReviewPanel:
         )
         self.panel.setContentView_(content)
 
-        self.heading = self._label("Diktat mit Screenshot", 20, 457, 580, 24, 18)
+        self.heading = self._label("Dictation with Screenshot", 20, 457, 580, 24, 18)
         content.addSubview_(self.heading)
-        self.hint = self._label("Prompt kopieren, im gewünschten Task einfügen.", 20, 433, 580, 18, 12)
+        self.hint = self._label("Copy the prompt and paste it into your task.", 20, 433, 580, 18, 12)
         content.addSubview_(self.hint)
 
         scroll = NSScrollView.alloc().initWithFrame_(NSMakeRect(20, 235, 580, 185))
@@ -109,15 +109,15 @@ class ReviewPanel:
         self.image_view = NSImageView.alloc().initWithFrame_(NSMakeRect(20, 90, 155, 130))
         self.image_view.setImageScaling_(NSImageScaleProportionallyUpOrDown)
         content.addSubview_(self.image_view)
-        self.context_label = self._label("Bild wird aufgenommen ...", 190, 125, 410, 95, 12)
+        self.context_label = self._label("Capturing screenshot ...", 190, 125, 410, 95, 12)
         self.context_label.setUsesSingleLineMode_(False)
         content.addSubview_(self.context_label)
 
         self.status = self._label("", 20, 58, 580, 24, 12)
         content.addSubview_(self.status)
-        self.discard_button = self._button("Verwerfen", 20, 20, 110, "discard:")
-        self.copy_image_button = self._button("Bild kopieren", 328, 20, 120, "copyImage:")
-        self.copy_button = self._button("Prompt kopieren", 452, 20, 148, "copy:")
+        self.discard_button = self._button("Discard", 20, 20, 110, "discard:")
+        self.copy_image_button = self._button("Copy Image", 328, 20, 120, "copyImage:")
+        self.copy_button = self._button("Copy Prompt", 452, 20, 148, "copy:")
         self.copy_button.setEnabled_(True)
         self.copy_image_button.setEnabled_(False)
         for button in (self.discard_button, self.copy_image_button, self.copy_button):
@@ -142,7 +142,7 @@ class ReviewPanel:
     def show(self, text, image_path, context, error=None, pending=False, text_pending=False, text_error=None, recording=False):
         self._closing = False
         self._copied = False
-        self.discard_button.setTitle_("Verwerfen")
+        self.discard_button.setTitle_("Discard")
         self._context = context
         self._image_path = image_path
         self._image_pending = pending
@@ -169,7 +169,7 @@ class ReviewPanel:
         else:
             self.image_view.setImage_(None)
             self.context_label.setStringValue_(
-                "Bild wird aufgenommen ..." if pending else (error or "Kein Screenshot vorhanden")
+                "Capturing screenshot ..." if pending else (error or "No screenshot available")
             )
         self.copy_image_button.setEnabled_(bool(image_path))
         self._refresh_ready_state()
@@ -191,16 +191,16 @@ class ReviewPanel:
         self._refresh_ready_state()
 
     def _refresh_ready_state(self):
-        self.copy_button.setTitle_("Fertig & kopieren" if self._recording else "Prompt kopieren")
+        self.copy_button.setTitle_("Finish & Copy" if self._recording else "Copy Prompt")
         self.copy_button.setEnabled_(not self._image_pending and (self._recording or not self._text_pending))
         if self._image_pending:
-            self.set_status("Warte auf Screenshot ...")
+            self.set_status("Waiting for screenshot ...")
         elif self._recording:
-            self.set_status("Aufnahme läuft. Fertig & kopieren beendet das Diktat.")
+            self.set_status("Recording. Finish & Copy ends dictation.")
         elif self._text_pending:
-            self.set_status("Diktat wird verarbeitet ...")
+            self.set_status("Processing dictation ...")
         else:
-            self.set_status(self._text_error or self._image_error or "Bereit zum Einfügen")
+            self.set_status(self._text_error or self._image_error or "Ready to paste")
 
     def set_status(self, message):
         self.status.setStringValue_(message)
@@ -212,7 +212,7 @@ class ReviewPanel:
     def _copy(self):
         if self.on_copy(str(self.text_view.string()), self._image_path, self._context) is not False:
             self._copied = True
-            self.discard_button.setTitle_("Schließen")
+            self.discard_button.setTitle_("Close")
 
     def _copy_image(self):
         if not self._image_path:
@@ -220,16 +220,16 @@ class ReviewPanel:
         from Foundation import NSData
         data = NSData.dataWithContentsOfFile_(self._image_path)
         if data is None:
-            self.set_status("Bilddatei fehlt. Bitte Screenshot erneut aufnehmen.")
+            self.set_status("Image file missing. Capture the screenshot again.")
             return
         pasteboard = NSPasteboard.generalPasteboard()
         pasteboard.clearContents()
         if not pasteboard.setData_forType_(data, NSPasteboardTypePNG):
-            self.set_status("Bild konnte nicht kopiert werden.")
+            self.set_status("Could not copy the image.")
             return
         self._copied = True
-        self.discard_button.setTitle_("Schließen")
-        self.set_status("Bild kopiert. Im gewünschten Task mit ⌘V einfügen.")
+        self.discard_button.setTitle_("Close")
+        self.set_status("Image copied. Paste into your task with ⌘V.")
 
     def _discard(self):
         if self._closing:

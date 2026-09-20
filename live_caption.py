@@ -120,19 +120,19 @@ class LiveCaptionOverlay:
             self._camera_action = _CameraAction.alloc().init()
             self._camera_action.owner = self
             icon = NSImageView.alloc().initWithFrame_(NSMakeRect(10, 11, 21, 20))
-            icon.setImage_(NSImage.imageWithSystemSymbolName_accessibilityDescription_("photo", "Bild"))
+            icon.setImage_(NSImage.imageWithSystemSymbolName_accessibilityDescription_("photo", "Image"))
             icon.setContentTintColor_(NSColor.whiteColor())
             chip_content.addSubview_(icon)
 
             screen_button = NSButton.alloc().initWithFrame_(NSMakeRect(36, 4, 82, 34))
-            screen_button.setTitle_("Vollbild")
+            screen_button.setTitle_("Screen")
             screen_button.setBezelStyle_(NSBezelStyleRounded)
             screen_button.setTarget_(self._camera_action)
             screen_button.setAction_("captureScreen:")
             chip_content.addSubview_(screen_button)
 
             region_button = NSButton.alloc().initWithFrame_(NSMakeRect(120, 4, 96, 34))
-            region_button.setTitle_("Ausschnitt")
+            region_button.setTitle_("Region")
             region_button.setBezelStyle_(NSBezelStyleRounded)
             region_button.setTarget_(self._camera_action)
             region_button.setAction_("captureRegion:")

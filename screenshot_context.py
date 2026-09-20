@@ -78,8 +78,8 @@ def _check_capture_access():
         # require restarting this app after the grant becomes effective.
         granted = Quartz.CGRequestScreenCaptureAccess()
         if granted:
-            raise PermissionError("Bildschirmaufnahme erlaubt. Bitte mac-dictate neu starten und erneut aufnehmen.")
-        raise PermissionError("Bildschirmaufnahme nicht erlaubt. Bitte in den macOS-Systemeinstellungen freigeben.")
+            raise PermissionError("Screen Recording allowed. Restart mac-dictate, then try again.")
+        raise PermissionError("Screen Recording denied. Enable it in macOS System Settings.")
 
 
 def _new_capture_path():
@@ -103,13 +103,13 @@ def capture_screen(display_id):
     _check_capture_access()
     image = Quartz.CGDisplayCreateImage(display_id)
     if image is None:
-        raise RuntimeError("Der Bildschirm konnte nicht aufgenommen werden.")
+        raise RuntimeError("Could not capture the screen.")
     path = _new_capture_path()
     data = NSBitmapImageRep.alloc().initWithCGImage_(image).representationUsingType_properties_(
         NSPNGFileType, {}
     )
     if data is None or not data.writeToFile_atomically_(str(path), True):
-        raise RuntimeError("Der Screenshot konnte nicht gespeichert werden.")
+        raise RuntimeError("Could not save the screenshot.")
     return str(path)
 
 
@@ -126,7 +126,7 @@ def capture_region():
         return str(path)
     path.unlink(missing_ok=True)
     if result.stderr:
-        raise RuntimeError("Der Ausschnitt konnte nicht aufgenommen werden.")
+        raise RuntimeError("Could not capture the region.")
     return None
 
 

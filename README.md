@@ -36,14 +36,14 @@ your cursor. The preview is provisional and may correct itself; it never edits
 the focused app. Short recordings still finish normally without a preview.
 
 For a task with a screenshot, press **Right Option** once and click a screenshot button while speaking. A small
-picture icon with **Vollbild** and **Ausschnitt** buttons appears beside the mouse
-pointer. Vollbild captures the display under the pointer. Ausschnitt opens the
+picture icon with **Screen** and **Region** buttons appears beside the mouse
+pointer. Screen captures the display under the pointer. Region opens the
 macOS selector so you can mark the area to capture.
 Press Escape to cancel the selection. The two buttons stay near the pointer's
 starting spot so they are easy to click. **F13** is a shortcut for the whole display; you can map a
 second mouse side button to it. The microphone keeps recording, and the review card opens
 as soon as the image is ready.
-The card shows a provisional live transcript. Click **Fertig & kopieren** when you are done
+The card shows a provisional live transcript. Click **Finish & Copy** when you are done
 speaking. Recording stops, Whisper finishes the full transcript, and the prompt is copied.
 Paste it into
 either a new or an existing Codex task. You can also copy the PNG separately and
